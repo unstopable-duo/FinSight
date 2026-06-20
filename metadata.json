@@ -1,0 +1,13 @@
+{
+  "name": "FinSight",
+  "description": "Personal Financial Intelligence",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation",
+    "display-capture"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

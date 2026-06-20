@@ -1,0 +1,10 @@
+import fs from 'fs';
+let content = fs.readFileSync('src/App.tsx', 'utf8');
+content = content.replace(/Amount \(ZAR\)/g, 'Amount');
+content = content.replace(/ZAR \${/g, '${dashboard.account?.currency || "ZAR"} ${');
+content = content.replace(/<span>ZAR /g, '<span>{dashboard.account?.currency || "ZAR"} ');
+content = content.replace(/\+'}ZAR /g, "+'} {dashboard.account?.currency || 'ZAR'} ");
+content = content.replace(/'ZAR '/g, '`${dashboard.account?.currency || "ZAR"} `');
+content = content.replace(/>ZAR /g, '>{dashboard.account?.currency || "ZAR"} ');
+content = content.replace(/<span className="text-xl text-muted mr-1">ZAR<\/span>/g, '<span className="text-xl text-muted mr-1">{dashboard.account?.currency || "ZAR"}</span>');
+fs.writeFileSync('src/App.tsx', content);

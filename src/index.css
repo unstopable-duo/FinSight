@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+
+  --color-background: var(--bg-main);
+  --color-foreground: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-border: var(--border-main);
+  --color-primary: var(--bg-primary);
+  --color-primary-foreground: var(--text-primary);
+  --color-surface: var(--bg-surface);
+  --color-surface-hover: var(--bg-surface-hover);
+  --color-primary-gradient: var(--bg-primary-grad);
+  --color-primary-gradient-end: var(--bg-primary-grad-end);
+  
+  /* ensure Recharts have the right colors depending on the theme */
+}
+
+:root {
+  --bg-main: #F4F4F5;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #F4F4F5;
+  --text-main: #1A1A1A;
+  --text-primary: #ffffff;
+  --text-muted: #71717A;
+  --border-main: #E4E4E7;
+  --bg-primary: #1A1A1A;
+  --bg-primary-grad: #1A1A1A;
+  --bg-primary-grad-end: #333333;
+}
+
+.dark {
+  --bg-main: #09090B;
+  --bg-surface: #18181B;
+  --bg-surface-hover: #27272A;
+  --text-main: #e0e0e0;
+  --text-primary: #121212;
+  --text-muted: #A1A1AA;
+  --border-main: #27272A;
+  --bg-primary: #e0e0e0;
+  --bg-primary-grad: #e0e0e0;
+  --bg-primary-grad-end: #a0a0a0;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Recharts customization to handle dark and light without passing down to component */
+.dark .recharts-text {
+  fill: #a0a0a0 !important;
+}
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #333333 !important;
+}
+.dark .recharts-default-tooltip {
+  background-color: var(--bg-surface) !important;
+  border-color: var(--border-main) !important;
+  color: var(--text-main) !important;
+}
+.dark .recharts-tooltip-item {
+  color: var(--text-main) !important;
+}
