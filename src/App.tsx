@@ -81,6 +81,14 @@ export default function App() {
         setUser(u);
         setToken(t);
         setNeedsAuth(false);
+        pendo.identify({
+          visitor: {
+            id: u.uid,
+            email: u.email || '',
+            full_name: u.displayName || '',
+            is_anonymous: u.isAnonymous
+          }
+        });
       },
       () => setNeedsAuth(true)
     );
@@ -100,6 +108,16 @@ export default function App() {
         setCurrency(data.account.currency);
       }
 
+      pendo.identify({
+        visitor: {
+          id: user.uid,
+          email: user.email || '',
+          full_name: user.displayName || '',
+          is_anonymous: user.isAnonymous,
+          persona: data.account?.persona || '',
+          currency: data.account?.currency || ''
+        }
+      });
 
     } catch(e) {
       console.error(e);
@@ -155,6 +173,7 @@ export default function App() {
 
   const handleLogout = async () => {
     await logout();
+    pendo.clearSession();
     setUser(null);
     setToken(null);
     setNeedsAuth(true);
