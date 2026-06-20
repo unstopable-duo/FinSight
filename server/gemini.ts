@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { DB } from "./db";
+import { pendoTrack } from "./pendo";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -135,6 +136,14 @@ Current Space Balance: ${clientContext.account ? clientContext.account.balance :
                await DB.update('spaces', toSpace._id, toSpace);
                await DB.insert('transactions', { user_id, space_id: fromSpace._id, amount: (args as any).amount, category: 'Transfer', merchant: 'To ' + toSpace.name, date: new Date().toISOString(), type: 'expense', currency: fromSpace.currency });
                await DB.insert('transactions', { user_id, space_id: toSpace._id, amount: (args as any).amount, category: 'Transfer', merchant: 'From ' + fromSpace.name, date: new Date().toISOString(), type: 'income', currency: toSpace.currency });
+               await pendoTrack("ai_funds_transferred", user_id, {
+                 from_space_id: (args as any).from_space_id,
+                 to_space_id: (args as any).to_space_id,
+                 amount: (args as any).amount,
+                 from_space_name: fromSpace.name,
+                 to_space_name: toSpace.name,
+                 success: true
+               });
                callResult = { message: 'Transfer successful' };
              } else {
                callResult = { status: 'failed', error: 'Space not found' };
@@ -147,10 +156,31 @@ Current Space Balance: ${clientContext.account ? clientContext.account.balance :
                 await DB.update('spaces', space._id, space);
              }
              await DB.insert('transactions', { user_id, ...(args as any), date: (args as any).date ? new Date((args as any).date).toISOString() : new Date().toISOString() });
+             await pendoTrack("ai_transaction_recorded", user_id, {
+               amount: (args as any).amount,
+               category: (args as any).category,
+               merchant: (args as any).merchant,
+               transaction_type: (args as any).type,
+               space_id: (args as any).space_id,
+               currency: (args as any).currency || ""
+             });
           } else if (name === 'setBudget') {
              await DB.insert('budgets', { user_id, ...(args as any) });
+             await pendoTrack("ai_budget_created", user_id, {
+               category: (args as any).category,
+               limit: (args as any).limit,
+               month: (args as any).month,
+               space_id: (args as any).space_id,
+               currency: (args as any).currency || ""
+             });
           } else if (name === 'createGoal') {
              await DB.insert('goals', { user_id, ...(args as any), current_amount: 0 });
+             await pendoTrack("ai_goal_created", user_id, {
+               goal_name: (args as any).name,
+               target_amount: (args as any).target_amount,
+               target_date: (args as any).target_date,
+               space_id: (args as any).space_id
+             });
           }
         } catch (err: any) {
            callResult = { status: 'failed', error: err.message };
