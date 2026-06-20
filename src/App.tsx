@@ -43,6 +43,7 @@ export default function App() {
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const conversationIdRef = useRef(crypto.randomUUID());
 
   // Dashboard State
   const [dashboard, setDashboard] = useState<any>({ transactions: [], budgets: [], goals: [], currentMonth: '' });
@@ -327,6 +328,17 @@ export default function App() {
   const sendMessageRaw = async (userText: string, imageString?: string) => {
     if ((!userText.trim() && !imageString) || isSending) return;
 
+    const promptMessageId = crypto.randomUUID();
+    if (typeof pendo !== 'undefined') {
+      pendo.trackAgent("prompt", {
+        agentId: "zlmyQHzz91V4hK0LVtSZzOKKajI",
+        conversationId: conversationIdRef.current,
+        messageId: promptMessageId,
+        content: userText,
+        fileUploaded: !!imageString,
+      });
+    }
+
     setMessages(prev => [...prev, { role: 'user', text: userText, image: imageString }]);
     setIsSending(true);
 
@@ -371,7 +383,18 @@ export default function App() {
       } else {
         setMessages(prev => [...prev, { role: 'assistant', text: "I processed that for you." }]);
       }
-      
+
+      if (typeof pendo !== 'undefined') {
+        pendo.trackAgent("agent_response", {
+          agentId: "zlmyQHzz91V4hK0LVtSZzOKKajI",
+          conversationId: conversationIdRef.current,
+          messageId: crypto.randomUUID(),
+          content: data.text || "I processed that for you.",
+          modelUsed: "gemini-2.5-flash",
+          toolsUsed: data.actions?.map((a: any) => a.name) || [],
+        });
+      }
+
       if (data.actionResults && data.actionResults.length > 0) {
          fetchDashboard();
       }
