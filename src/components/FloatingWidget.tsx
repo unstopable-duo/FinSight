@@ -25,6 +25,10 @@ export function FloatingWidget({ onSendMessage }: { onSendMessage: (text: string
         const transcript = event.results[0][0].transcript;
         setInput(prev => prev ? prev + ' ' + transcript : transcript);
         setIsListening(false);
+        pendo.track("voice_input_completed", {
+          transcript_length: transcript.length,
+          speech_language: recognition.lang
+        });
       };
 
       recognition.onerror = (event: any) => {
@@ -86,6 +90,12 @@ export function FloatingWidget({ onSendMessage }: { onSendMessage: (text: string
       
       // Stop sharing
       track.stop();
+
+      pendo.track("screen_capture_analyzed", {
+        image_width: bitmap.width,
+        image_height: bitmap.height,
+        message_text_length: input.length
+      });
       
       // Send image + text
       await handleSend(base64Image);

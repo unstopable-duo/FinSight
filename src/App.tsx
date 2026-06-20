@@ -125,6 +125,10 @@ export default function App() {
         setToken(result.accessToken);
         setUser(result.user);
         setNeedsAuth(false);
+        pendo.track("google_sign_in_completed", {
+          account_type: accountType,
+          auth_provider: "google"
+        });
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -143,6 +147,11 @@ export default function App() {
         setToken(result.accessToken);
         setUser(result.user);
         setNeedsAuth(false);
+        pendo.track("guest_sign_in_completed", {
+          account_type: accountType,
+          currency: currency,
+          persona: accountType
+        });
       }
     } catch (err) {
       console.error('Guest login failed:', err);
@@ -172,6 +181,11 @@ export default function App() {
         body: JSON.stringify({ name: newSpaceName, type: newSpaceType, currency })
       });
       if (res.ok) {
+        pendo.track("space_created", {
+          space_name: newSpaceName,
+          space_type: newSpaceType,
+          currency: currency
+        });
         setIsSpaceModalOpen(false);
         setNewSpaceName('');
         await fetchDashboard();
@@ -199,6 +213,12 @@ export default function App() {
         body: JSON.stringify({ persona: newAccountType, currency: newCurrency })
       });
       if (res.ok) {
+        pendo.track("settings_updated", {
+          account_type: newAccountType,
+          currency: newCurrency,
+          previous_currency: currency,
+          currency_changed: !!updates.currency && updates.currency !== currency
+        });
         await fetchDashboard();
       }
     } catch (err) {
@@ -213,6 +233,9 @@ export default function App() {
     try {
       const res = await fetch(`/api/clear?user_id=${user.uid}`, { method: 'POST' });
       if (res.ok) {
+        pendo.track("all_data_cleared", {
+          confirmed: true
+        });
         await fetchDashboard();
         setIsSettingsOpen(false);
         setMessages([{ role: 'assistant', text: 'All data has been cleared.' }]);
@@ -225,6 +248,14 @@ export default function App() {
   };
 
   const deleteTransaction = async (id: string) => {
+    const transaction = dashboard.transactions?.find((t: any) => t._id === id);
+    pendo.track("transaction_deleted", {
+      transaction_id: id,
+      transaction_type: transaction?.type || "",
+      amount: transaction?.amount || 0,
+      category: transaction?.category || "",
+      merchant: transaction?.merchant || ""
+    });
     // Optimistic cache update
     setDashboard((prev: any) => ({
       ...prev,
@@ -275,6 +306,14 @@ export default function App() {
         headers: { Authorization: `Bearer ${currentToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ values })
       });
+
+      pendo.track("export_to_sheets_completed", {
+        transaction_count: rows.length,
+        spreadsheet_id: sheetData.spreadsheetId,
+        success: true,
+        currency: dashboard.account?.currency || "ZAR",
+        export_month: format(new Date(), 'yyyy-MM')
+      });
       
       setMessages(prev => [...prev, { role: 'assistant', text: `Export complete! You can view your sheet here: ${sheetData.spreadsheetUrl}` }]);
     } catch(err) {
@@ -317,6 +356,14 @@ export default function App() {
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
 
+      pendo.track("calendar_reminder_created", {
+        event_date: format(lastDay, 'yyyy-MM-dd'),
+        balance: dashboard.account?.balance || 0,
+        currency: dashboard.account?.currency || "ZAR",
+        calendar_event_id: data.id || "",
+        success: true
+      });
+
       setMessages(prev => [...prev, { role: 'assistant', text: `Reminder created! View it here: ${data.htmlLink}` }]);
     } catch(err) {
       console.error(err);
@@ -352,7 +399,17 @@ export default function App() {
       });
 
       const data = await res.json();
-      
+
+      pendo.track("chat_message_sent", {
+        message_length: userText.length,
+        has_image: !!imageString,
+        has_workspace_token: !!currentToken,
+        active_space_id: activeSpaceId || "",
+        actions_performed_count: data.actions?.length || 0,
+        response_success: !data.error,
+        input_source: imageString ? "image" : "text"
+      });
+
       if (data.error) {
         if (data.error.includes('API key not valid') || data.error.includes('API_KEY_INVALID')) {
            setMessages(prev => [...prev, { role: 'assistant', text: "Error: Your Gemini API Key is missing or invalid. Please configure GEMINI_API_KEYZ in the Settings menu." }]);
@@ -391,6 +448,11 @@ export default function App() {
      reader.onload = (event) => {
         const base64 = event.target?.result as string;
         if (fileInputRef.current) fileInputRef.current.value = '';
+        pendo.track("receipt_uploaded", {
+          file_type: file.type,
+          file_size: file.size,
+          image_format: file.type.split('/')[1] || "unknown"
+        });
         sendMessageRaw("Please analyze this receipt and log the transaction.", base64);
      };
      reader.readAsDataURL(file);
